@@ -301,7 +301,7 @@ def make_heatmap(gdf: gpd.GeoDataFrame,
 
 def vertical_heatmap(df: pd.DataFrame|gpd.GeoDataFrame,
                      ir: bool=False,
-                     to_height: int=10.8
+                     to_height: int|float=10.8
                      ) -> plt.Figure:
     '''
     Generates

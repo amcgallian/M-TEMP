@@ -112,7 +112,7 @@ graph LR;
 
 ### Loading Data
 
-#### `load_excelsheet(filepath: str) -> dict[int, list[str|int]]`
+#### `load_excelsheet()`
 
 Loads the Excel reference sheet and converts it into a dictionary for easy access to file paths and configurations.
 
@@ -120,7 +120,7 @@ Loads the Excel reference sheet and converts it into a dictionary for easy acces
   - `filepath`: Path to the Excel file containing test information.
 - **Returns**: A dictionary with test numbers as keys and associated information as values.
 
-#### `define_output_folder(folderpath: str) -> str`
+#### `define_output_folder()`
 
 Prompts the user to select an output folder for saving generated plots.
 
@@ -128,7 +128,7 @@ Prompts the user to select an output folder for saving generated plots.
   - `folderpath`: Default path to the output folder.
 - **Returns**: The path to the selected output folder.
 
-#### `load_temp_daq(test_num: int) -> pd.DataFrame`
+#### `load_temp_daq()`
 
 Loads and cleans temperature DAQ data based on the test number.
 
@@ -136,7 +136,7 @@ Loads and cleans temperature DAQ data based on the test number.
   - `test_num`: The test number associated with the desired temperature data.
 - **Returns**: A pandas DataFrame containing temperature data.
 
-#### `load_ir_daq(test_num: int) -> pd.DataFrame`
+#### `load_ir_daq()`
 
 Loads and cleans IR/RH DAQ data based on the test number.
 
@@ -144,7 +144,7 @@ Loads and cleans IR/RH DAQ data based on the test number.
   - `test_num`: The test number associated with the desired IR/RH data.
 - **Returns**: A pandas DataFrame containing IR/RH data.
 
-#### `load_gps(test_num: int) -> pd.DataFrame`
+#### `load_gps()`
 
 Loads and cleans GPS data based on the test number.
 
@@ -154,7 +154,7 @@ Loads and cleans GPS data based on the test number.
 
 ### Data Conversion
 
-#### `convertCtoF(ccolumn: pd.Series) -> pd.Series`
+#### `convertCtoF()`
 
 Converts a temperature column from Celsius to Fahrenheit.
 
@@ -162,7 +162,7 @@ Converts a temperature column from Celsius to Fahrenheit.
   - `ccolumn`: Pandas Series containing temperature data in Celsius.
 - **Returns**: Pandas Series with temperature data in Fahrenheit.
 
-#### `convertVtoIR(vcolumn: pd.Series) -> pd.Series`
+#### `convertVtoIR()`
 
 Calculates temperature in Fahrenheit from raw IR voltage data.
 
@@ -170,7 +170,7 @@ Calculates temperature in Fahrenheit from raw IR voltage data.
   - `vcolumn`: Pandas Series containing raw IR voltage data.
 - **Returns**: Pandas Series with temperature data in Fahrenheit.
 
-#### `convertVtoRH(rhvcolumn: pd.Series, tempcolumn: pd.Series) -> pd.Series`
+#### `convertVtoRH()`
 
 Calculates Relative Humidity (%) from raw RH voltage and temperature data.
 
@@ -181,7 +181,7 @@ Calculates Relative Humidity (%) from raw RH voltage and temperature data.
 
 ### Spatial Data Handling
 
-#### `spatially_enable_data(sensordf: pd.DataFrame, gpsdf: pd.DataFrame) -> gpd.GeoDataFrame`
+#### `spatially_enable_data()`
 
 Merges sensor data with GPS data to create a GeoDataFrame with spatial information.
 
@@ -192,23 +192,23 @@ Merges sensor data with GPS data to create a GeoDataFrame with spatial informati
 
 ### Visualization
 
-#### `timeseries(dataframe: pd.DataFrame|gpd.GeoDataFrame, temp: bool=True, ir: bool=False, rh: bool=False, b: bool=True, ymax: None|int|float=None, ymin: None|int|float=None, starttime: None|pd.Timestamp=None, endtime: None|pd.Timestamp=None) -> plt.Figure`
+#### `timeseries()`
 
 Generates a time series plot for temperature, IR, and/or RH data.
 
 - **Parameters**:
   - `dataframe`: DataFrame or GeoDataFrame containing the data to plot.
-  - `temp`: Include temperature data.
-  - `ir`: Include IR data.
-  - `rh`: Include RH data.
-  - `b`: Include 'b' sensors.
-  - `ymax`: Maximum y-axis limit.
-  - `ymin`: Minimum y-axis limit.
-  - `starttime`: Start time for the plot.
-  - `endtime`: End time for the plot.
+  - `temp`: Include temperature data. Default True.
+  - `ir`: Include IR data. Default False.
+  - `rh`: Include RH data. Default False.
+  - `b`: Include 'b' sensors. Default True.
+  - `ymax`: Maximum y-axis limit as a float or integer. Default None.
+  - `ymin`: Minimum y-axis limit as a float or integer. Default None.
+  - `starttime`: Start time for the plot as a Pandas Timestamp. Default None.
+  - `endtime`: End time for the plot as a Pandas Timestamp. Default None.
 - **Returns**: Matplotlib Figure object with the time series plot.
 
-#### `scatter_plot(column1: pd.Series|gpd.GeoSeries, column2: pd.Series|gpd.GeoSeries) -> plt.Figure`
+#### `scatter_plot()`
 
 Generates a scatter plot between two data columns.
 
@@ -217,24 +217,24 @@ Generates a scatter plot between two data columns.
   - `column2`: Second data column.
 - **Returns**: Matplotlib Figure object with the scatter plot.
 
-#### `make_heatmap(gdf: gpd.GeoDataFrame, cell_size: int=10, interpolate: bool=False) -> plt.Figure`
+#### `make_heatmap()`
 
 Generates a heatmap from geospatial data.
 
 - **Parameters**:
   - `gdf`: GeoDataFrame containing the spatial data.
-  - `cell_size`: Size of each cell in the heatmap.
-  - `interpolate`: Whether to interpolate the heatmap.
+  - `cell_size`: Size, in meters, of each cell in the heatmap as an integer. Default 10.
+  - `interpolate`: Whether to interpolate the heatmap. Default False.
 - **Returns**: Matplotlib Figure object with the heatmap.
 
-#### `vertical_heatmap(df: pd.DataFrame|gpd.GeoDataFrame, ir: bool=False, to_height: int=10.8) -> plt.Figure`
+#### `vertical_heatmap()`
 
 Generates a vertical heatmap from the data.
 
 - **Parameters**:
   - `df`: DataFrame or GeoDataFrame containing the data.
-  - `ir`: Include IR data.
-  - `to_height`: Height parameter for the heatmap.
+  - `ir`: Include IR data. Default False.
+  - `to_height`: Height parameter, in feet, for the heatmap as a float or integer. Default 10.8.
 - **Returns**: Matplotlib Figure object with the vertical heatmap.
 
 ## Cart Configuration
