@@ -34,7 +34,7 @@ configs = {
                 'AI7 (°C)': '5.4 ft b (°C)'
                 },
 
-    "Cart 1 IR": {'a': 'b'},
+    "Cart 1 IR": {'AI0 (V)':'IR Raw'},
 
     "Cart 2 Temp": {'AI2 (°C)': '1.8 ft (°C)',
                 'AI1 (°C)': '0.6 ft (°C)',
@@ -46,7 +46,11 @@ configs = {
                 'AI7 (°C)': '9.0 ft (°C)'
                 },
 
-    "Cart 2 IR": {'a': 'b'}
+    "Cart 2 IR": {'AI0 (V)':'IR Raw',
+                  'AI1 (V)':'RH 0.0ft',
+                  'AI3 (V)':'RH 1.8ft',
+                  'AI2 (V)':'RH 7.2ft',
+                  'AI4 (V)':'RH 9.0ft'}
 
 }
 
