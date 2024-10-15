@@ -9,6 +9,8 @@ The **M-Temp Data Processing Module** is a Python script designed to handle and 
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
+  - [Using The Script](#using-the-script)
+  - [Using The Excel Sheet](#using-the-excel-sheet)
 - [Directory Structure](#directory-structure)
 - [Functions](#functions)
   - [Loading Data](#loading-data)
@@ -52,7 +54,7 @@ More to come soon on how to interact and use.
 
 Here’s a revised version of the section that improves clarity and presentation:
 
-### Using the Excel Sheet
+### Using The Excel Sheet
 
 To ensure the script functions correctly, the included Excel sheet must be up-to-date and accurately filled out for each test. The script depends on the information in each column being accurate so that the only interaction you need to have is through inputting the test number. The Excel sheet consists of 11 columns, each with specific requirements:
 
@@ -76,25 +78,25 @@ To ensure the script functions correctly, the included Excel sheet must be up-to
 
 The raw data and outputs are organized in a structured directory layout to facilitate easy access and management. The scipt also hinges on this structure being used.
 
-```plaintext
-/main_project_folder
-│
-├── main.py
-├── mtemp.py
-├── test_list.xlsx
-│
-├── /test_folders
-│   ├── /test_n
-│   │   ├── temp_data.csv
-│   │   ├── ir_rh_data.csv
-│   │   ├── gps_data.csv
-│   │   └── /outputs
-│   │       ├── output_plot1.png
-│   │       ├── output_results.png
-│   │       └── ...
-│   ├── /test_n+1
-│   └── ...
+```mermaid
+graph LR;
+    A[main_project_folder] -->|contains| B[main.py]
+    A -->|contains| C[mtemp.py]
+    A -->|contains| D[test_list.xlsx]
+    A -->|contains| E[test_folders]
+    E -->|contains| F[test_n]
+    F -->|contains| G[temp_data.csv]
+    F -->|contains| H[ir_rh_data.csv]
+    F -->|contains| I[gps_data.csv]
+    F -->|contains| J[outputs]
+    J -->|contains| K[output_plot1.png]
+    J -->|contains| L[output_results.png]
+    J -->|contains| M[...]
+    E -->|contains| N[test_n+1]
+    E -->|contains| O[...]
 ```
+
+### Explanation of Key Files and Folders
 
 - **main.py**: The primary script that utilizes the `mtemp` module for data processing.
 - **mtemp.py**: The M-Temp Data Processing Module containing all necessary functions.
