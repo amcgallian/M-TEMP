@@ -38,6 +38,8 @@ pip install -r requirements.txt
 
 ## Usage
 
+### Using The Script
+
 From the command line you can invoke `main.py` to begin the script to process M-Temp data.
 
 ```bash
@@ -47,6 +49,28 @@ python main.py
 You then will be presented with an interface within the program where you will simply input an integer that refers to the test you would like to work with. You then will have other prompts to do specific operations with the data from that test.
 
 More to come soon on how to interact and use.
+
+Here’s a revised version of the section that improves clarity and presentation:
+
+### Using the Excel Sheet
+
+To ensure the script functions correctly, the included Excel sheet must be up-to-date and accurately filled out for each test. The script depends on the information in each column being accurate so that the only interaction you need to have is through inputting the test number. The Excel sheet consists of 11 columns, each with specific requirements:
+
+| Column Name               | Requirements                                                         |
+|---------------------------|----------------------------------------------------------------------|
+| **Test Number**           | Must be an integer.                                                 |
+| **Test Folder**           | Should be written as a string; ensure it is enclosed in quotes.    |
+| **Temperature Data**      | Should be written as a string; ensure it is enclosed in quotes.    |
+| **IR/RH Data**            | Should be written as a string; ensure it is enclosed in quotes.    |
+| **GPS Data**              | Should be written as a string; ensure it is enclosed in quotes.    |
+| **Test Date**             | Valid date format, stay consistent.                                                 |
+| **Testing Route**         | Description of the testing route.                                  |
+| **Cart**                  | Name or description of the cart used.                              |
+| **Set Up**                | Description of the wiring setup process.                                  |
+| **Temperature Configuration** | Should be written as a string; ensure it is enclosed in quotes.    |
+| **IR/RH Configuration**   | Should be written as a string; ensure it is enclosed in quotes.    |
+
+**Note:** All columns must be filled out properly. If there is no data or information available for a column, please input `None`.
 
 ## Directory Structure
 
@@ -256,7 +280,7 @@ configs = {
 
 ## Author
 
-**Andrew McGallian**
+**M-TEMP Team**
 
 _Last Updated: October 15, 2024_
 

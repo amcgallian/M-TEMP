@@ -299,16 +299,4 @@ def make_heatmap(gdf: gpd.GeoDataFrame,
     return None
 
 
-def vertical_heatmap(df: pd.DataFrame|gpd.GeoDataFrame,
-                     ir: bool=False,
-                     to_height: int=10.8
-                     ) -> plt.Figure:
-    '''
-    Generates
-
-    Inputs:
-
-    Returns:
-
-    '''
-    return None
+def vert
