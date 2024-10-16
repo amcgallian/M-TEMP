@@ -254,7 +254,7 @@ def convertCtoF(cdfcol: pd.DataFrame|gpd.GeoDataFrame
     '''
     for col in cdfcol.columns:
         if '(°C)' in col:
-            cdfcol[col[:-4] + ' (°F)'] = cdfcol[col] * (9/5) + 32
+            cdfcol[col[:-4] + '(°F)'] = cdfcol[col] * (9/5) + 32
     return cdfcol
 
 
@@ -347,10 +347,9 @@ def timeseries(output_folder: str,
                ir: bool=False,
                rh: bool=False,
                b: bool=True,
-               ymax: None|int|float=None,
-               ymin: None|int|float=None,
-               starttime: None|pd.Timestamp=None,
-               endtime: None|pd.Timestamp=None) -> plt.Figure:
+               yminmax: None|tuple[int|float, int|float]=None,
+               timeframe: None|tuple[pd.Timestamp, pd.Timestamp]=None
+               ) -> plt.Figure:
     '''
     Generates a time series of either temperature, temperature and IR, IR,
     or RH %. For the temperature columns there is the option to include the 'b'
@@ -359,15 +358,19 @@ def timeseries(output_folder: str,
     temperature with the 'b' sensors.
 
     Inputs:
-        dataframe (pd.DataFrame|gpd.GeoDataFrame):
-        temp (bool):
-        ir (bool):
-        rh (bool):
-        b (bool):
-        ymax (None|int|float):
-        ymin (None|int|float):
-        starttime (None|pd.Timestamp):
-        endtime (None|pd.Timestamp):
+        output_folder (str): Where the plot will be saved to, this should be
+        automatic and based on define_output_folder()
+        dataframe (pd.DataFrame|gpd.GeoDataFrame): The (Geo)DataFrame with all
+        the columns to be used for plotting.
+        temp (bool): If RTDs should be plotted. Default True.
+        ir (bool): If IR should be plotted. Defualt False.
+        rh (bool): If RH should be plotted. Default False.
+        b (bool): If the 'b' RTD sensors should be plotted. Default True. Will
+        be plotted as dashed lines of the same color as their 'a'.
+        ymaxmin (None|tuple[int|float, int|float]): The maximum and minimum
+        y-axis values for the plot. Default None.
+        timeframe (None|tuple[pd.Timestamp, pd.Timestamp]): Filter start and
+        end time for the plot.
 
     Returns:
         plt.Figure: Time series plot with the chosen parameters.
@@ -405,8 +408,10 @@ def timeseries(output_folder: str,
     #plt.gca().xaxis.set_major_locator(mdates.MinuteLocator(interval=5))
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
     plt.xlabel('Time', fontsize=30)
-    if ymin is not None and ymax is not None:
-        plt.ylim(ymin, ymax)
+    if yminmax is not None:
+        plt.ylim(yminmax[0], yminmax[1])
+    if timeframe is not None:
+        plt.xlim(timeframe[0], timeframe[1])
     plt.tick_params(axis='both', which='major', labelsize=20)
     plt.title(input('What would you like the time series title to be?: '),
               fontsize=30)
@@ -415,58 +420,289 @@ def timeseries(output_folder: str,
     plt.grid(True)
     plt.savefig(output_folder)
     plt.show()
-    return None
+    return plt
 
 
-def dot_map(gdf: gpd.GeoDataFrame) -> plt.Figure:
+def dot_map(gdf: gpd.GeoDataFrame, output_folder: str) -> plt.Figure:
     '''
     Generates a map with each data point on it, usually used as a test to show
     path and to make sure everything merged correctly and was spatially enabled.
+    Will automatically use the '5.4 ft (°F)' column to plot. This function it
+    more for ensuring correct GPS merging and plotting.
 
     Inputs:
-        gdf (gpd.GeoDataFrame):
+        gdf (gpd.GeoDataFrame): GeoDataFrame with all relevant sensor and gps
+        data.
+        output_folder (str): Where the plot will be saved to, this should be
+        automatic and based on define_output_folder()
+
+    Returns:
+        plt.Figure: The plot of GPS data on the map with the '5.4 ft (°F)'
+        level as the color of each dot.
     '''
-    return None
+    fig, ax = plt.subplots(figsize=(40, 10))
+    gdf.plot(ax=ax, marker='o', column='5.4 ft (°F)',
+             cmap='Reds', markersize=40, legend=True)
+    ctx.add_basemap(ax, crs=gdf.crs.to_string(),
+                    source=ctx.providers.OpenStreetMap.Mapnik)
+    plt.axis('off')
+    plt.title(input('What would you like the plot title to be?: '))
+    plt.savefig(output_folder)
+    plt.show()
+    return plt
 
 
 def scatter_plot(column1: pd.Series|gpd.GeoSeries,
-                 column2: pd.Series|gpd.GeoSeries) -> plt.Figure:
+                 column2: pd.Series|gpd.GeoSeries,
+                 output_folder: str,
+                 column3: None|pd.Series|gpd.GeoSeries=None,
+                 cmap: str='viridis'
+                 ) -> plt.Figure:
     '''
-    Generates a
+    Generates a scatter plot of two chosen columns from a (Geo)DataFrame.
 
     Inputs:
+        column1 (pd.Series|gpd.GeoSeries): Column 1 to be plotted.
+        column2 (pd.Series|gpd.GeoSeries): Column 2 to be plotted.
+        output_folder (str): Where the plot will be saved to, this should be
+        automatic and based on define_output_folder()
+        column3 (None|pd.Series|gpd.GeoSeries): Column 3 to be plotted as a
+        color ramp on the plotted points of Column 1 and 2. Default None.
+        cmap (str): Colormap to use for coloring points based on column3.
+                    Default is 'viridis'.
 
     Returns:
+        plt.Figure: The scatter plot of the columns plotted.
 
     '''
-    return None
+    plt.figure()
+    if column3 is not None:
+        plt.scatter(column1, column2, c=column3, cmap=cmap)
+        plt.colorbar(label=column3.name)
+    else:
+        plt.scatter(column1, column2, color='green')
+    plt.xlabel(column1.name)
+    plt.ylabel(column2.name)
+    plt.title(f'{column1} vs. {column2} Correlation Plot')
+    plt.legend()
+    plt.savefig(output_folder)
+    plt.show()
+    return plt
 
 
 def make_heatmap(gdf: gpd.GeoDataFrame,
+                 output_folder: str,
+                 units: str='F',
                  cell_size: int=10,
                  interpolate: bool=False,
                  ) -> plt.Figure:
     '''
-    Generates a
+    Generates a heatmap of the chosen columns, based on given units, using the
+    (eoDataFrame. Will automatically save outputs to output folder.
 
     Inputs:
+        gdf (gpd.GeoDataFrame): GeoDataFrame with the relevant data to be used
+        for plotting.
+        output_folder (str): Should be based off of define_output_folder,
+        should be automatic.
+        units (str): Will default to °F as the units. Other acceptable inputs
+        are C for °C and RH for RH%. This is case sensitive.
+        cell_size (int): The cell size for the grid to be plotted. In meters.
+        Default is 10. Not reccomended to go less than 5 if not interpolating
+        due to phone GPS accuracy limits.
+        interpolate (bool): Decides if the plot should be interpolated. Default
+        is False, may not be alwasys useful for transects, better for grids.
+        Uses linear interpolation.
 
     Returns:
+        plt.Figure: The heatmap of each height for the unit type.
 
     '''
-    return None
+    units = '(°F)'
+    if units is not 'F':
+        if units is 'C':
+            units = '(°C)'
+        if units is 'RH':
+            units = 'RH (%)'
+    global_min = float('inf')
+    global_max = float('-inf')
+
+    for vertcolumn in gdf.columns:
+        if units in vertcolumn:
+            xmin, ymin, xmax, ymax = gdf.total_bounds
+            cols = int(np.ceil((xmax - xmin) / cell_size))
+            rows = int(np.ceil((ymax - ymin) / cell_size))
+            grid = np.full((rows, cols), np.nan)
+            for row in range(rows):
+                for col in range(cols):
+                    x0 = xmin + col * cell_size
+                    x1 = x0 + cell_size
+                    y0 = ymin + row * cell_size
+                    y1 = y0 + cell_size
+                    points_in_cell = gdf.cx[x0:x1, y0:y1]
+                    if not points_in_cell.empty:
+                        mean_temp = points_in_cell[vertcolumn].mean()
+                        grid[row, col] = mean_temp
+                        global_min = min(global_min, np.nanmin(grid))
+                        global_max = max(global_max, np.nanmax(grid))
+    if interpolate:
+        for col in gdf.columns:
+            if units in col:
+                xmin, ymin, xmax, ymax = gdf.total_bounds
+                cols = int(np.ceil((xmax - xmin) / cell_size))
+                rows = int(np.ceil((ymax - ymin) / cell_size))
+                grid_x, grid_y = np.meshgrid(
+                    np.linspace(xmin, xmax, cols),
+                    np.linspace(ymin, ymax, rows)
+                )
+                coords = np.array([(x, y) for x, y in zip(gdf.geometry.x,
+                                                          gdf.geometry.y)])
+                temps = gdf[col].values
+                grid_temps = griddata(coords, temps, (grid_x, grid_y),
+                                      method='linear')
+                transform = from_origin(xmin, ymax, cell_size, cell_size)
+                def flip_grid_vertically(grid):
+                    return np.flipud(grid)
+                grid_flipped = flip_grid_vertically(grid_temps)
+                raster_meta = {
+                    'driver': 'GTiff',
+                    'height': rows,
+                    'width': cols,
+                    'count': 1,
+                    'dtype': rasterio.float32,
+                    'crs': 'EPSG:3857',
+                    'transform': transform,
+                }
+                raster_output_path = os.path.join(output_folder,
+                                                  f'{col}_heatmap_inter.tif')
+                image_output_path = os.path.join(output_folder,
+                                                 f'{col}_heatmap_inter.png')
+                with rasterio.open(raster_output_path, 'w',
+                                   **raster_meta) as dst:
+                    dst.write(grid_flipped, 1)
+                with rasterio.open(raster_output_path) as src:
+                    data = src.read(1)
+                    bounds = src.bounds
+                fig, ax = plt.subplots(figsize=(10, 10))
+                img = ax.imshow(data, cmap='Reds', extent=(bounds.left,
+                                                           bounds.right,
+                                                           bounds.bottom,
+                                                           bounds.top),
+                                                           aspect='equal',
+                                                           vmin=global_min,
+                                                           vmax=global_max)
+                plt.colorbar(img, label=units)
+                plt.axis('off')
+                plt.title(f'{col}')
+                plt.savefig(image_output_path)
+                plt.show()
+    else:
+        for vertcolumn in gdf.columns:
+            if units in vertcolumn:
+                xmin, ymin, xmax, ymax = gdf.total_bounds
+                cols = int(np.ceil((xmax - xmin) / cell_size))
+                rows = int(np.ceil((ymax - ymin) / cell_size))
+                grid = np.full((rows, cols), np.nan)
+                for row in range(rows):
+                    for col in range(cols):
+                        x0 = xmin + col * cell_size
+                        x1 = x0 + cell_size
+                        y0 = ymin + row * cell_size
+                        y1 = y0 + cell_size
+                        points_in_cell = gdf.cx[x0:x1, y0:y1]
+                        if not points_in_cell.empty:
+                            grid[row, col] = points_in_cell[vertcolumn].mean()
+                transform = from_origin(xmin, ymax, cell_size, cell_size)
+                def flip_grid_vertically(grid):
+                    return np.flipud(grid)
+                grid_flipped = flip_grid_vertically(grid)
+                raster_meta = {
+                    'driver': 'GTiff',
+                    'height': rows,
+                    'width': cols,
+                    'count': 1,
+                    'dtype': rasterio.float32,
+                    'crs': 'EPSG:3857',
+                    'transform': transform,
+                }
+                raster_output_path = os.path.join(output_folder,
+                                                  f'{vertcolumn}_heatmap.tif')
+                image_output_path = os.path.join(output_folder,
+                                                 f'{vertcolumn}_heatmap.png')
+                with rasterio.open(raster_output_path, 'w',
+                                   **raster_meta) as dst:
+                    dst.write(grid_flipped, 1)
+                with rasterio.open(raster_output_path) as src:
+                    data = src.read(1)
+                    bounds = src.bounds
+                fig, ax = plt.subplots(figsize=(20, 10))
+                img = ax.imshow(data, cmap='Reds', extent=(bounds.left,
+                                                           bounds.right,
+                                                           bounds.bottom,
+                                                           bounds.top),
+                                                           aspect='equal',
+                                                           vmin=global_min,
+                                                           vmax=global_max)
+                plt.colorbar(img, label=units)
+                plt.axis('off')
+                plt.title(f'{vertcolumn}')
+                plt.savefig(image_output_path)
+                plt.show()
+    return plt
 
 
 def vertical_heatmap(df: pd.DataFrame|gpd.GeoDataFrame,
+                     output_folder: str,
+                     temp: bool=True,
                      ir: bool=False,
+                     rh: bool=False,
                      to_height: int|float=10.8
                      ) -> plt.Figure:
     '''
-    Generates
+    Generates a vertial heatmap of the chosen data from the (Geo)DataFrame.
 
     Inputs:
+        df (pd.DataFrame|gpd.GeoDataFrame): The (Geo)DataFrame with all the
+        relevant sensor data to be plotted.
+        output_folder (str): The output folder that the plot will be saved to,
+        should be found automatically through define_output_folder().
+        temp (bool): If temperature columns should be plotted. Default True.
+        ir (bool): If IR should be plotted. Default False.
+        rh (bool): IF RH should be plotted. Default False.
+        to_height (int|float): The height of the top sensor plus the interval
+        between all sensors.
 
     Returns:
+        plt.Figure: The plot of the vertical heatmap.
 
     '''
-    return None
+    if temp:
+        units = '(°F)'
+    if rh:
+        units = 'RH (%)'
+    image_output_path = os.path.join(output_folder, 'vertheatmap.png')
+    heights = np.arange(0, to_height, 1.8)
+    grid_labels = [f'{h}ft' for h in heights]
+    grid_data = []
+    if ir:
+        grid_data.append(df['IR (°F)'])
+    for height in heights:
+        height_data = df[f'{height} {units}'].tolist()
+        grid_data.append(height_data)
+    fig, ax = plt.subplots(figsize=(40, 10))
+    heatmap = ax.imshow(grid_data, cmap='Reds', aspect='auto',
+                        interpolation='nearest')
+    ax.set_title(input('What would you like the title to be?: '), fontsize=30)
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Height (ft)', fontsize=30)
+    ax.set_yticks(np.arange(len(heights)))
+    ax.set_yticklabels(grid_labels)
+    plt.tick_params(axis='both', which='major', labelsize=20)
+    ax.invert_yaxis()
+    cbar = plt.colorbar(heatmap, ax=ax, orientation='vertical')
+    cbar.ax.tick_params(labelsize=20)
+    cbar.set_label(units, size=30)
+    plt.tight_layout()
+    plt.savefig(output_folder)
+    plt.show()
+    return plt
