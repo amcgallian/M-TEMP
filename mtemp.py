@@ -14,6 +14,8 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+import matplotlib.dates as mdates
 import numpy as np
 import rasterio
 from rasterio.transform import from_origin
@@ -34,7 +36,7 @@ configs = {
                 'AI7 (°C)': '5.4 ft b (°C)'
                 },
 
-    "Cart 1 IR": {'AI0 (V)':'IR Raw'},
+    "Cart 1 IR": {'AI0 (V)':'IR Raw (V)'},
 
     "Cart 2 Temp": {'AI2 (°C)': '1.8 ft (°C)',
                 'AI1 (°C)': '0.6 ft (°C)',
@@ -46,7 +48,7 @@ configs = {
                 'AI7 (°C)': '9.0 ft (°C)'
                 },
 
-    "Cart 2 IR": {'AI0 (V)':'IR Raw',
+    "Cart 2 IR": {'AI0 (V)':'IR Raw (V)',
                   'AI1 (V)':'Raw RH 0.0ft',
                   'AI3 (V)':'Raw RH 1.8ft',
                   'AI2 (V)':'Raw RH 7.2ft',
@@ -169,7 +171,6 @@ def load_temp_daq(test_num: int,
     temp_data['Time'] = pd.to_datetime(temp_data['Date/Time'])
     temp_data['Time'] = temp_data['Time'].dt.strftime('%H:%M:%S')
     temp_data = temp_data.set_index(pd.DatetimeIndex(temp_data['Time']))
-    temp_data.index = temp_data.index.time
     temp_data = temp_data.drop(['Sample', 'Date/Time', 'Time'], axis=1)
     if '3.6 ft b (°C)' in temp_data.columns:
         temp_data = temp_data[['0.6 ft (°C)', '1.8 ft (°C)', '3.6 ft (°C)',
@@ -206,7 +207,6 @@ def load_ir_daq(test_num: int,
     irrh_data['Time'] = pd.to_datetime(irrh_data['Date/Time'])
     irrh_data['Time'] = irrh_data['Time'].dt.strftime('%H:%M:%S')
     irrh_data = irrh_data.set_index(pd.DatetimeIndex(irrh_data['Time']))
-    irrh_data.index = irrh_data.index.time
     irrh_data = irrh_data.drop(['Sample', 'Date/Time', 'Time'], axis=1)
 
     return irrh_data
@@ -234,7 +234,6 @@ def load_gps(test_num: int,
     gps_data['Time'] = pd.to_datetime(gps_data['Timestamp'])
     gps_data['Time'] = gps_data['Time'].dt.strftime('%H:%M:%S')
     gps_data = gps_data.set_index(pd.DatetimeIndex(gps_data['Time']))
-    gps_data.index = gps_data.index.time
     gps_data = gps_data.drop(['Timestamp', 'Time'], axis=1)
     return gps_data
 
@@ -255,7 +254,7 @@ def convertCtoF(cdfcol: pd.DataFrame|gpd.GeoDataFrame
     '''
     for col in cdfcol.columns:
         if '(°C)' in col:
-            cdfcol[col + ' (°F)'] = cdfcol[col] * (9/5) + 32
+            cdfcol[col[:-4] + ' (°F)'] = cdfcol[col] * (9/5) + 32
     return cdfcol
 
 
@@ -274,9 +273,9 @@ def convertVtoIR(virdfcol: pd.DataFrame|gpd.GeoDataFrame
         column of the temperature data converted to °F from Raw IR V.
     '''
     for col in virdfcol.columns:
-        if 'IR (V)' in col:
+        if 'IR Raw (V)' in col:
             virdfcol[col[0:2] + ' (°F)'] = ((((virdfcol[col] - 0.620)
-                                              * 105.263) * (9/5)) + 32)
+                                             * 105.263) * (9/5)) + 32)
     return virdfcol
 
 
@@ -300,9 +299,9 @@ def convertVtoRH(rhdfcol: pd.DataFrame|gpd.GeoDataFrame
             ir_v = col
             rtd_temp = 0
             for daqcol in rhdfcol.columns:
-                if ir_v[3:] in daqcol:
+                if ir_v[7:] in daqcol and 'b' not in daqcol:
                     rtd_temp = daqcol
-            rhdfcol[col[3:] + 'RH (%)'] = (((rhdfcol[col]/5)-0.16)/0.0062
+            rhdfcol[col[7:] + 'RH (%)'] = (((rhdfcol[col]/5)-0.16)/0.0062
                                         )/(1.0546 - (0.00216 * ((
                                             rhdfcol[rtd_temp] - 32) * (5/9))))
     return rhdfcol
@@ -342,7 +341,8 @@ def spatially_enable_data(sensordf: pd.DataFrame,
     return gdf
 
 
-def timeseries(dataframe: pd.DataFrame|gpd.GeoDataFrame,
+def timeseries(output_folder: str,
+               dataframe: pd.DataFrame|gpd.GeoDataFrame,
                temp: bool=True,
                ir: bool=False,
                rh: bool=False,
@@ -373,6 +373,48 @@ def timeseries(dataframe: pd.DataFrame|gpd.GeoDataFrame,
         plt.Figure: Time series plot with the chosen parameters.
 
     '''
+    plt.figure(figsize=(40, 10))
+    colordict = {
+        6: (mcolors.CSS4_COLORS['navy']),
+        5: (mcolors.CSS4_COLORS['royalblue']),
+        4: (mcolors.CSS4_COLORS['dodgerblue']),
+        3: (mcolors.CSS4_COLORS['tomato']),
+        2: (mcolors.CSS4_COLORS['red']),
+        1: (mcolors.CSS4_COLORS['maroon']),
+    }
+    i = 1
+    if temp:
+        for column in dataframe.columns:
+            if '(°F)' in column and 'ft' in column:
+                if 'b' not in column:
+                    plt.plot(dataframe.index, dataframe[column], label=column,
+                            color=colordict.get(i, (0, 0, 0)))
+                    i += 1
+                elif b:
+                    plt.plot(dataframe.index, dataframe[column], label=column,
+                            color=colordict.get(i, (0, 0, 0)),
+                            linestyle='dashed')
+        plt.ylabel('Temperature (°F)', fontsize=30)
+    if ir:
+        plt.plot(dataframe.index, dataframe['IR (°F)'], label='IR (°F)',
+                 color='black')
+        plt.ylabel('Temperature (°F)', fontsize=30)
+    if rh:
+        plt.ylabel('Relative Humidity (RH %)', fontsize=30)
+
+    #plt.gca().xaxis.set_major_locator(mdates.MinuteLocator(interval=5))
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+    plt.xlabel('Time', fontsize=30)
+    if ymin is not None and ymax is not None:
+        plt.ylim(ymin, ymax)
+    plt.tick_params(axis='both', which='major', labelsize=20)
+    plt.title(input('What would you like the time series title to be?: '),
+              fontsize=30)
+    plt.legend(fontsize=30)
+    plt.tight_layout()
+    plt.grid(True)
+    plt.savefig(output_folder)
+    plt.show()
     return None
 
 
