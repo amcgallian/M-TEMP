@@ -1,8 +1,8 @@
-# M-Temp Data Processing and Analysis Program
+# M-TEMP Data Processing and Analysis Program
 
 ## Overview
 
-The **M-Temp Data Processing Module** is a Python script designed to handle and process M-Temp data efficiently. This module provides a suite of functions for loading, cleaning, converting, and visualizing temperature, IR/RH, and GPS data. It is intended to be interacted with at the command line through the `main.py` script.
+The **M-TEMP Data Processing And Analysis Programe Module** is a Python script designed to handle and process data from the University of Chicago mobile temperature measurement system (M-TEMP) efficiently. This module provides a suite of functions for loading, cleaning, converting, and visualizing temperature, IR/RH, and GPS data. It is intended to be interacted with at the command line through the `main.py` script.
 
 ## Table of Contents
 
@@ -23,6 +23,8 @@ The **M-Temp Data Processing Module** is a Python script designed to handle and 
     - [`convertCtoF()`](#convertctoF)
     - [`convertVtoIR()`](#convertvtoir)
     - [`convertVtoRH()`](#convertvtorh)
+  - [Data Merging](#data-merging)
+    - [`merge_sensors()`](#merge_sensors)
   - [Spatial Data Handling](#spatial-data-handling)
     - [`spatially_enable_data()`](#spatially_enable_data)
   - [Visualization](#visualization)
@@ -39,6 +41,7 @@ The **M-Temp Data Processing Module** is a Python script designed to handle and 
 
 - **Data Loading**: Efficiently load and clean temperature, IR/RH, and GPS data from Excel and CSV files.
 - **Data Conversion**: Convert temperature from Celsius to Fahrenheit, raw IR voltage to temperature, and raw RH voltage to relative humidity percentages.
+- **Data Merging**: Merge different sensor data together to create more extensive datasets.
 - **Spatial Data Handling**: Merge sensor data with GPS data to create geospatial datasets.
 - **Visualization**: Generate time series plots, scatter plots, and heatmaps for comprehensive data analysis.
 - **Configuration Management**: Easily manage different sensor configurations for multiple carts.
@@ -64,8 +67,6 @@ python main.py
 You then will be presented with an interface within the program where you will simply input an integer that refers to the test you would like to work with. You then will have other prompts to do specific operations with the data from that test.
 
 More to come soon on how to interact and use.
-
-Here’s a revised version of the section that improves clarity and presentation:
 
 ### Using The Excel Sheet
 
@@ -125,8 +126,6 @@ graph LR;
 
 ### Loading Data
 
-Here are the revised descriptions for the functions based on your updated code:
-
 #### `load_excelsheet()`
 
 Automatically loads the Excel reference sheet and converts it into a dictionary for easy access to file paths, configurations, and test-related information. The dictionary uses test numbers as keys and their associated data, including folder paths, temperature data, IR/RH data, GPS data, and more, as a list values. This function should be run at program start to ensure all data-loading functions can access the necessary file paths.
@@ -134,81 +133,108 @@ Automatically loads the Excel reference sheet and converts it into a dictionary 
 - **Parameters**:
   - None
 - **Returns**:
-  A dictionary with test numbers as keys and associated lists of relevant information as values, such as file paths and configurations.
+  - `dict[int, list[str | int]]`A dictionary with test numbers as keys and associated lists of relevant information as values, such as file paths and configurations.
 
 #### `define_output_folder()`
 
 Automatically finds or creates the output folder for the specified test number. The function uses the test number to locate the associated test folder and ensures an 'outputs' subdirectory is created if it doesn't already exist.
 
 - **Parameters**:
-  - `test_dict`: Dictionary containing test information loaded from the Excel sheet.
-  - `test_number`: The test number for which the output folder path is needed.
+  - `test_dict` (`int`): Dictionary containing test information loaded from the Excel sheet.
+  - `test_number` (`dict[int, list[str | int]]`): The test number for which the output folder path is needed.
 - **Returns**:
-  The path to the output folder for the specified test number.
+  - `str`: The path to the output folder for the specified test number.
 
 #### `load_temp_daq()`
 
 Loads, cleans, and returns the temperature DAQ data as a pandas DataFrame based on the given test number. It uses the test folder and temperature data path stored in the Excel reference sheet. The function formats timestamps, renames columns according to configuration, and selects relevant temperature columns for analysis.
 
 - **Parameters**:
-  - `test_num`: The test number associated with the desired temperature data.
-  - `tests_dict`: Dictionary containing test information loaded from the Excel sheet.
+  - `test_num` (`int`): The test number associated with the desired temperature data.
+  - `tests_dict` (`dict[int, list[str | int]]`): Dictionary containing test information loaded from the Excel sheet.
 - **Returns**:
-  A pandas DataFrame containing the cleaned temperature data, with the appropriate columns renamed and formatted for analysis.
+  - `pd.DataFrame`: A pandas DataFrame containing the cleaned temperature data, with the appropriate columns renamed and formatted for analysis.
 
 #### `load_ir_daq()`
 
 Loads and cleans IR/RH DAQ data based on the test number.
 
 - **Parameters**:
-  - `test_num`: The test number associated with the desired IR/RH data.
-- **Returns**: A pandas DataFrame containing IR/RH data.
+  - `test_num` (`int`): The test number associated with the desired IR/RH data.
+  - `tests_dict` (`dict[int, list[str | int]]`): Dictionary containing test information, including file paths and configurations.
+
+- **Returns**:
+  - `pd.DataFrame`: A pandas DataFrame containing the cleaned IR/RH data with timestamps set as the index.
 
 #### `load_gps()`
 
 Loads and cleans GPS data based on the test number.
 
 - **Parameters**:
-  - `test_num`: The test number associated with the desired GPS data.
-- **Returns**: A pandas DataFrame containing GPS data.
+  - `test_num` (`int`): The test number associated with the desired GPS data.
+  - `tests_dict` (`dict[int, list[str | int]]`): Dictionary containing test information, including file paths and configurations.
+
+- **Returns**:
+  - `pd.DataFrame`: A pandas DataFrame containing the cleaned GPS data with timestamps set as the index.
 
 ### Data Conversion
 
 #### `convertCtoF()`
 
-Converts a temperature column from Celsius to Fahrenheit.
+Converts temperature columns from Celsius to Fahrenheit within a (Geo)DataFrame.
 
 - **Parameters**:
-  - `ccolumn`: Pandas Series containing temperature data in Celsius.
-- **Returns**: Pandas Series with temperature data in Fahrenheit.
+  - `cdfcol` (`pd.DataFrame` | `gpd.GeoDataFrame`): The DataFrame containing temperature data in Celsius.
+
+- **Returns**:
+  - `pd.DataFrame` | `gpd.GeoDataFrame`: The original DataFrame with new columns added for temperatures in Fahrenheit.
 
 #### `convertVtoIR()`
 
 Calculates temperature in Fahrenheit from raw IR voltage data.
 
 - **Parameters**:
-  - `vcolumn`: Pandas Series containing raw IR voltage data.
-- **Returns**: Pandas Series with temperature data in Fahrenheit.
+  - `virdfcol` (`pd.DataFrame` | `gpd.GeoDataFrame`): The DataFrame containing raw IR voltage data.
+
+- **Returns**:
+  - `pd.DataFrame` | `gpd.GeoDataFrame`: The original DataFrame with new columns added for IR temperatures in Fahrenheit.
 
 #### `convertVtoRH()`
 
-Calculates Relative Humidity (%) from raw RH voltage and temperature data.
+Calculates Relative Humidity (%) from raw RH voltage and associated temperature data.
 
 - **Parameters**:
-  - `rhvcolumn`: Pandas Series containing raw RH voltage data.
-  - `tempcolumn`: Pandas Series containing temperature data in Celsius.
-- **Returns**: Pandas Series with calculated Relative Humidity percentages.
+  - `rhdfcol` (`pd.DataFrame` | `gpd.GeoDataFrame`): The DataFrame containing raw RH voltage data and associated temperature data.
+
+- **Returns**:
+  - `pd.DataFrame` | `gpd.GeoDataFrame`: The original DataFrame with new columns added for calculated Relative Humidity percentages.
+
+### Data Merging
+
+#### `merge_sensors()`
+
+Merges the temperature and IR/RH DataFrames using their indices.
+
+- **Parameters**:
+  - `sensordf` (`pd.DataFrame`): The temperature DataFrame to merge.
+  - `irrhdf` (`pd.DataFrame`): The IR/RH DataFrame to merge.
+
+- **Returns**:
+  - `pd.DataFrame`: A pandas DataFrame containing the merged data from both sensors.
 
 ### Spatial Data Handling
 
 #### `spatially_enable_data()`
 
-Merges sensor data with GPS data to create a GeoDataFrame with spatial information.
+Merges sensor data with GPS data to create a GeoDataFrame with spatial information. Optionally includes IR/RH data.
 
 - **Parameters**:
-  - `sensordf`: DataFrame containing sensor data.
-  - `gpsdf`: DataFrame containing GPS data.
-- **Returns**: GeoPandas GeoDataFrame with spatially enabled sensor data.
+  - `sensordf` (`pd.DataFrame`): DataFrame containing sensor data.
+  - `gpsdf` (`pd.DataFrame`): DataFrame containing GPS data.
+  - `irrhdf` (`pd.DataFrame` | `None`, optional): DataFrame containing IR/RH data. Defaults to `None`.
+
+- **Returns**:
+  - `gpd.GeoDataFrame`: A GeoDataFrame with spatially enabled sensor data, transformed to EPSG:3857 CRS.
 
 ### Visualization
 
@@ -217,45 +243,71 @@ Merges sensor data with GPS data to create a GeoDataFrame with spatial informati
 Generates a time series plot for temperature, IR, and/or RH data.
 
 - **Parameters**:
-  - `dataframe`: DataFrame or GeoDataFrame containing the data to plot.
-  - `temp`: Include temperature data. Default True.
-  - `ir`: Include IR data. Default False.
-  - `rh`: Include RH data. Default False.
-  - `b`: Include 'b' sensors. Default True.
-  - `ymax`: Maximum y-axis limit as a float or integer. Default None.
-  - `ymin`: Minimum y-axis limit as a float or integer. Default None.
-  - `starttime`: Start time for the plot as a Pandas Timestamp. Default None.
-  - `endtime`: End time for the plot as a Pandas Timestamp. Default None.
-- **Returns**: Matplotlib Figure object with the time series plot.
+  - `output_folder` (str): Path where the plot will be saved.
+  - `dataframe` (`pd.DataFrame` | `gpd.GeoDataFrame`): The DataFrame containing the data to plot.
+  - `temp` (bool, optional): Include temperature data. Default is `True`.
+  - `ir` (bool, optional): Include IR data. Default is `False`.
+  - `rh` (bool, optional): Include RH data. Default is `False`.
+  - `b` (bool, optional): Include 'b' sensors with dashed lines. Default is `True`.
+  - `yminmax` (`tuple[int | float, int | float]` | `None`, optional): Tuple specifying the y-axis limits. Default is `None`.
+  - `timeframe` (`tuple[pd.Timestamp, pd.Timestamp]` | `None`, optional): Tuple specifying the start and end times for the plot. Default is `None`.
+
+- **Returns**:
+  - `plt.Figure`: The generated time series plot.
+
+#### `dot_map()`
+
+Generates a map with each data point plotted, primarily used to verify correct GPS merging and spatial enabling.
+
+- **Parameters**:
+  - `gdf` (`gpd.GeoDataFrame`): GeoDataFrame containing all relevant sensor and GPS data.
+  - `output_folder` (str): Path where the plot will be saved.
+
+- **Returns**:
+  - `plt.Figure`: The generated dot map plot.
 
 #### `scatter_plot()`
 
-Generates a scatter plot between two data columns.
+Generates a scatter plot between two data columns, with an optional third column for color-coding.
 
 - **Parameters**:
-  - `column1`: First data column.
-  - `column2`: Second data column.
-- **Returns**: Matplotlib Figure object with the scatter plot.
+  - `column1` (`pd.Series` | `gpd.GeoSeries`): First data column to plot on the x-axis.
+  - `column2` (`pd.Series` | `gpd.GeoSeries`): Second data column to plot on the y-axis.
+  - `output_folder` (str): Path where the plot will be saved.
+  - `column3` (`pd.Series` | `gpd.GeoSeries` | `None`, optional): Third data column for color-coding the points. Defaults to `None`.
+  - `cmap` (str, optional): Colormap for color-coding. Default is `'viridis'`.
+
+- **Returns**:
+  - `plt.Figure`: The generated scatter plot.
 
 #### `make_heatmap()`
 
-Generates a heatmap from geospatial data.
+Generates a heatmap from geospatial data based on specified units and cell size. Supports optional interpolation.
 
 - **Parameters**:
-  - `gdf`: GeoDataFrame containing the spatial data.
-  - `cell_size`: Size, in meters, of each cell in the heatmap as an integer. Default 10.
-  - `interpolate`: Whether to interpolate the heatmap. Default False.
-- **Returns**: Matplotlib Figure object with the heatmap.
+  - `gdf` (`gpd.GeoDataFrame`): GeoDataFrame containing the spatial data.
+  - `output_folder` (str): Path where the heatmap images will be saved.
+  - `units` (str, optional): Units for the heatmap. Acceptable values are `'ft (°F)'`, `'C'`, and `'RH (%)'`. Default is `'ft (°F)'`.
+  - `cell_size` (int, optional): Size of each cell in meters. Default is `10`.
+  - `interpolate` (bool, optional): Whether to interpolate the heatmap. Default is `False`.
+
+- **Returns**:
+  - `plt.Figure`: The generated heatmap plot.
 
 #### `vertical_heatmap()`
 
-Generates a vertical heatmap from the data.
+Generates a vertical heatmap from the data, displaying temperature, IR, and/or RH across different heights.
 
 - **Parameters**:
-  - `df`: DataFrame or GeoDataFrame containing the data.
-  - `ir`: Include IR data. Default False.
-  - `to_height`: Height parameter, in feet, for the heatmap as a float or integer. Default 10.8.
-- **Returns**: Matplotlib Figure object with the vertical heatmap.
+  - `df` (`pd.DataFrame` | `gpd.GeoDataFrame`): The DataFrame containing the data to plot.
+  - `output_folder` (str): Path where the vertical heatmap image will be saved.
+  - `temp` (bool, optional): Include temperature data. Default is `True`.
+  - `ir` (bool, optional): Include IR data. Default is `False`.
+  - `rh` (bool, optional): Include RH data. Default is `False`.
+  - `to_height` (`int` | `float`, optional): The height of the top sensor plus the interval between all sensors. Default is `10.8`.
+
+- **Returns**:
+  - `plt.Figure`: The generated vertical heatmap plot.
 
 ## Cart Configuration
 
@@ -273,7 +325,7 @@ configs = {
                 'AI7 (°C)': '5.4 ft b (°C)'
                 },
 
-    "Cart 1 IR": {'AI0 (V)':'IR Raw'},
+    "Cart 1 IR": {'AI0 (V)':'IR Raw (V)'},
 
     "Cart 2 Temp": {'AI2 (°C)': '1.8 ft (°C)',
                 'AI1 (°C)': '0.6 ft (°C)',
@@ -285,11 +337,11 @@ configs = {
                 'AI7 (°C)': '9.0 ft (°C)'
                 },
 
-    "Cart 2 IR": {'AI0 (V)':'IR Raw',
-                  'AI1 (V)':'RH 0.0ft',
-                  'AI3 (V)':'RH 1.8ft',
-                  'AI2 (V)':'RH 7.2ft',
-                  'AI4 (V)':'RH 9.0ft'}
+    "Cart 2 IR": {'AI0 (V)':'IR Raw (V)',
+                  'AI1 (V)':'Raw RH 0.0ft',
+                  'AI3 (V)':'Raw RH 1.8ft',
+                  'AI2 (V)':'Raw RH 7.2ft',
+                  'AI4 (V)':'Raw RH 9.0ft'}
 
 }
 ```
@@ -301,12 +353,15 @@ IR data in some way since it is so erratic.
 - **Subset DataFrame Generation**: Implement a function to generate a subset of the DataFrame based on user-specified columns.
 - **Enhanced Visualization**: Add more visualization options and enhance current options.
 - **Data Validation**: Incorporate data validation checks to ensure data integrity before processing.
+- **Make Full GUI**: Incorperating a GUI could make it easier to navigate the
+different flags of the plotting functions and could make it easier to visually
+subset data.
 
 ## Author
 
-**M-TEMP Team**
+**University of Chicago M-TEMP Team**
 
-_Last Updated: October 15, 2024_
+_Last Updated: October 16, 2024_
 
 ## License
 

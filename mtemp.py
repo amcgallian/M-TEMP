@@ -2,7 +2,7 @@
 Module for all the functions needed when processing M-Temp data. This is to be
 used within the main.py processing code.
 
-Last Updated: 10/15/2024
+Last Updated: 10/16/2024
 Author: Andrew McGallian
 
 Ideas for further functions:
@@ -10,6 +10,7 @@ Ideas for further functions:
 '''
 
 # Imports
+
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
@@ -134,7 +135,7 @@ def define_output_folder(test_dict: dict[int, list[str|int]], test_number: int
         str: The path to the output folder for the specified test number.
     '''
     test_folder = test_dict[test_number][0]
-    output_folder_path = os.path.join(test_folder, 'outputs')
+    output_folder_path = os.path.join('Test_folders', test_folder, 'outputs')
 
     # Create the output folder if it does not exist
     os.makedirs(output_folder_path, exist_ok=True)
@@ -307,6 +308,23 @@ def convertVtoRH(rhdfcol: pd.DataFrame|gpd.GeoDataFrame
     return rhdfcol
 
 
+def merge_sensors(sensordf: pd.DataFrame,
+                  irrhdf: pd.DataFrame) -> pd.DataFrame:
+    '''
+    Merges the temperature and IR/RH dataframes using their relevant DataFrames
+
+    Inputs:
+        sensordf (pd.DataFrame): Temperature Dataframe
+        irrhdf (pd.DataFrame): IR/RH DataFrame
+
+    Returns:
+        pd.DataFrame The new merged dataframe
+    '''
+    merged_sensor_df = pd.merge(sensordf, irrhdf, left_index=True,
+                                right_index=True, how='inner')
+    return merged_sensor_df
+
+
 def spatially_enable_data(sensordf: pd.DataFrame,
                           gpsdf: pd.DataFrame,
                           irrhdf: None|pd.DataFrame=None) -> gpd.GeoDataFrame:
@@ -327,8 +345,7 @@ def spatially_enable_data(sensordf: pd.DataFrame,
         sensor data.
     '''
     if irrhdf is not None:
-        merged_sensor_df = pd.merge(sensordf, irrhdf, left_index=True,
-                                    right_index=True, how='inner')
+        merged_sensor_df = merge_sensors(sensordf, irrhdf)
         merged_df = pd.merge(merged_sensor_df, gpsdf, left_index=True,
                             right_index=True, how='inner')
     else:
@@ -483,7 +500,7 @@ def scatter_plot(column1: pd.Series|gpd.GeoSeries,
         plt.scatter(column1, column2, color='green')
     plt.xlabel(column1.name)
     plt.ylabel(column2.name)
-    plt.title(f'{column1} vs. {column2} Correlation Plot')
+    plt.title(f'{column1.name} vs. {column2.name} Correlation Plot')
     plt.legend()
     plt.savefig(output_folder)
     plt.show()
@@ -518,11 +535,11 @@ def make_heatmap(gdf: gpd.GeoDataFrame,
         plt.Figure: The heatmap of each height for the unit type.
 
     '''
-    units = '(°F)'
-    if units is not 'F':
-        if units is 'C':
+    units = 'ft (°F)'
+    if units != 'F':
+        if units == 'C':
             units = '(°C)'
-        if units is 'RH':
+        if units == 'RH':
             units = 'RH (%)'
     global_min = float('inf')
     global_max = float('-inf')
@@ -677,13 +694,14 @@ def vertical_heatmap(df: pd.DataFrame|gpd.GeoDataFrame,
 
     '''
     if temp:
-        units = '(°F)'
+        units = 'ft (°F)'
     if rh:
         units = 'RH (%)'
     image_output_path = os.path.join(output_folder, 'vertheatmap.png')
-    heights = np.arange(0, to_height, 1.8)
-    grid_labels = [f'{h}ft' for h in heights]
+    heights = np.arange(1.8, to_height, 1.8)
+    grid_labels = [f'{h} ft' for h in heights]
     grid_data = []
+    grid_data.append(df['0.6 ft (°F)'])
     if ir:
         grid_data.append(df['IR (°F)'])
     for height in heights:
