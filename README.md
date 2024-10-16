@@ -9,7 +9,20 @@ The **M-TEMP Data Processing And Analysis Programe Module** is a Python script d
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Using The Script](#using-the-script)
+  - [Running the Script](#running-the-script)
+  - [Main Menu](#main-menu)
+    - [1. Select Test Number](#1-select-test-number)
+    - [2. Load Temperature Data](#2-load-temperature-data)
+    - [3. Load GPS Data](#3-load-gps-data)
+    - [4. Load IR/RH Data](#4-load-irrh-data)
+    - [5. Merge Data](#5-merge-data)
+    - [A. Plot Time Series](#a-plot-time-series)
+    - [B. Plot Vertical Heatmap](#b-plot-vertical-heatmap)
+    - [C. Plot Scatter Plot](#c-plot-scatter-plot)
+    - [D. Plot Dot Map](#d-plot-dot-map)
+    - [E. Plot Heatmap](#e-plot-heatmap)
+    - [9. Display Data](#9-display-data)
+    - [Q. Quit](#q-quit)
   - [Using The Excel Sheet](#using-the-excel-sheet)
 - [Directory Structure](#directory-structure)
 - [Functions](#functions)
@@ -48,7 +61,20 @@ The **M-TEMP Data Processing And Analysis Programe Module** is a Python script d
 
 ## Installation
 
-Ensure you have Python 3.7 or higher installed. You can install the required dependencies found with the included requirements.txt file by using `pip`:
+**Requirements**
+
+Ensure you have Python 3.7 or higher installed.
+
+**Clone the Repository**
+
+```{bash}
+git clone https://github.com/amcgallian/M-TEMP.git
+cd mtemp-data-processing
+```
+
+**Install Dependencies**
+
+You can install the required dependencies found with the included requirements.txt file by using `pip`:
 
 ```{bash}
 pip install -r requirements.txt
@@ -56,17 +82,295 @@ pip install -r requirements.txt
 
 ## Usage
 
-### Using The Script
+### Running the Script
 
-From the command line you can invoke `main.py` to begin the script to process M-Temp data.
+Navigate to the project directory and execute the `main.py` script using Python:
 
 ```bash
 python main.py
 ```
 
-You then will be presented with an interface within the program where you will simply input an integer that refers to the test you would like to work with. You then will have other prompts to do specific operations with the data from that test.
+Upon execution, you will be greeted with the M-TEMP ASCII title and the main menu.
 
-More to come soon on how to interact and use.
+### Main Menu
+
+The program presents a menu-driven interface. Below is a detailed explanation of each menu option:
+
+#### 1. Select Test Number
+
+**Description:** Choose the specific test case you wish to work with.
+
+**Usage:**
+
+1. Select option `1` from the main menu.
+2. Input the integer corresponding to the desired test number.
+
+**Example:**
+
+```
+Enter test number: 101
+Test number 101 selected.
+```
+
+#### 2. Load Temperature Data
+
+**Description:** Load temperature data associated with the selected test.
+
+**Usage:**
+
+1. Ensure a test number is selected.
+2. Select option `2` from the main menu.
+3. The program will load and convert temperature data from Celsius to Fahrenheit.
+
+**Example:**
+
+```
+Loading temperature data...
+Temperature data loaded successfully.
+Converting data...
+Data converted to Fahrenheit.
+```
+
+#### 3. Load GPS Data
+
+**Description:** Load GPS data for spatial analysis.
+
+**Usage:**
+
+1. Ensure a test number is selected.
+2. Select option `3` from the main menu.
+3. The program will load GPS data.
+
+**Example:**
+
+```
+Loading GPS data...
+GPS data loaded successfully.
+```
+
+#### 4. Load IR/RH Data
+
+**Description:** Load Infrared (IR) and Relative Humidity (RH) data.
+
+**Usage:**
+
+1. Ensure a test number is selected.
+2. Select option `4` from the main menu.
+3. The program will load and convert IR/RH data.
+
+**Example:**
+
+```
+Loading IR/RH data...
+IR/RH data loaded successfully.
+Converting voltage to IR...
+Data converted to IR.
+Converting voltage to RH...
+Data converted to RH.
+```
+
+#### 5. Merge Data
+
+**Description:** Merge loaded datasets. This option has two sub-options based on the data loaded:
+
+- **Merge and Spatially Enable Data:** Combines GPS data with temperature and IR/RH data.
+- **Merge Temperature and IR Data:** Combines temperature and IR data without spatial information.
+
+**Usage:**
+
+1. Ensure the necessary datasets are loaded.
+2. Select option `5` from the main menu.
+3. Depending on the loaded data, the program will perform the appropriate merge.
+
+**Example:**
+
+```
+Merging and spatially enabling data...
+Data merged and spatially enabled successfully.
+```
+
+#### A. Plot Time Series
+
+**Description:** Generate a time series plot of the selected data.
+
+**Usage:**
+
+1. Ensure that either the merged GeoDataFrame (`gdf`) or the merged DataFrame (`df`) is available.
+2. Select option `A` from the main menu.
+3. Follow the prompts to customize the plot (e.g., select sensors, set y-axis limits, define a timeframe).
+
+**Example:**
+
+```
+Do you want RTDs? y/n: y
+Do you want IR? y/n: n
+Do you want RH? y/n: y
+Do you want 'b' RTDs? y/n: n
+Do you want any y-axis min and max? y/n: y
+Y min: 50
+Y max: 100
+Do you have a timeframe? y/n: y
+Enter start time as HH:MM:SS: 08:00:00
+Enter end time as HH:MM:SS: 12:00:00
+What would you like the time series title to be?: Morning Temperature Analysis
+Plot generated successfully.
+```
+
+#### B. Plot Vertical Heatmap
+
+**Description:** Generate a vertical heatmap of the data.
+
+**Usage:**
+
+1. Ensure that the merged DataFrame is available.
+2. Select option `B` from the main menu.
+3. *(Note: This feature is currently not implemented and will display a warning.)*
+
+**Example:**
+
+```
+Plotting vertical heatmap...
+Vertical heatmap plotting is not yet implemented.
+```
+
+#### C. Plot Scatter Plot
+
+**Description:** Generate a scatter plot of the data.
+
+**Usage:**
+
+1. Ensure that the merged DataFrame is available.
+2. Select option `C` from the main menu.
+3. *(Note: This feature is currently not implemented and will display a warning.)*
+
+**Example:**
+
+```
+Plotting scatter plot...
+Scatter plot plotting is not yet implemented.
+```
+
+#### D. Plot Dot Map
+
+**Description:** Generate a dot map for spatial data visualization.
+
+**Usage:**
+
+1. Ensure that the GeoDataFrame is available.
+2. Select option `D` from the main menu.
+3. *(Note: This feature is currently not implemented and will display a warning.)*
+
+**Example:**
+
+```
+Plotting dot map...
+Dot map plotting is not yet implemented.
+```
+
+#### E. Plot Heatmap
+
+**Description:** Generate a heatmap of the data.
+
+**Usage:**
+
+1. Ensure that the GeoDataFrame is available.
+2. Select option `E` from the main menu.
+3. *(Note: This feature is currently not implemented and will display a warning.)*
+
+**Example:**
+
+```
+Plotting heatmap...
+Heatmap plotting is not yet implemented.
+```
+
+#### 9. Display Data
+
+**Description:** View the current state of all loaded and processed datasets.
+
+**Usage:**
+
+1. Select option `9` from the main menu.
+2. The program will display the first few rows and columns of each available DataFrame.
+
+**Example:**
+
+```
+GeoDataFrame
+-------------
+
+   latitude  longitude  temperature_IR  humidity
+0  34.0522  -118.2437             75         45
+1  34.0523  -118.2436             76         46
+
+GeoDataFrame columns:
+
+['latitude', 'longitude', 'temperature_IR', 'humidity']
+------------------------------
+
+Sensor DataFrame
+-----------------
+
+   temperature_A  temperature_B  IR
+0             70             72  75
+1             71             73  76
+
+Sensor DataFrame columns:
+
+['temperature_A', 'temperature_B', 'IR']
+------------------------------
+
+RTD DataFrame
+-------------
+
+   temperature_A  temperature_B
+0             70             72
+1             71             73
+
+RTD DataFrame columns:
+
+['temperature_A', 'temperature_B']
+------------------------------
+
+IR/RH DataFrame
+---------------
+
+   IR  humidity
+0  75        45
+1  76        46
+
+IR/RH DataFrame columns:
+
+['IR', 'humidity']
+------------------------------
+
+GPS DataFrame
+-------------
+
+   latitude  longitude
+0  34.0522  -118.2437
+1  34.0523  -118.2436
+
+GPS DataFrame columns:
+
+['latitude', 'longitude']
+------------------------------
+```
+
+#### Q. Quit
+
+**Description:** Exit the M-TEMP Data Processing Program.
+
+**Usage:**
+
+1. Select option `Q` from the main menu.
+2. The program will terminate gracefully with a farewell message.
+
+**Example:**
+
+```
+Exiting the M-TEMP system. Goodbye!
+```
 
 ### Using The Excel Sheet
 

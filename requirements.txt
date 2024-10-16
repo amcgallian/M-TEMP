@@ -6,3 +6,4 @@ numpy
 rasterio
 scipy
 contextily
+pyfiglet

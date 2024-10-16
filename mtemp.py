@@ -430,12 +430,12 @@ def timeseries(output_folder: str,
     if timeframe is not None:
         plt.xlim(timeframe[0], timeframe[1])
     plt.tick_params(axis='both', which='major', labelsize=20)
-    plt.title(input('What would you like the time series title to be?: '),
-              fontsize=30)
+    title = input('What would you like the time series title to be?: ')
+    plt.title(title, fontsize=30)
     plt.legend(fontsize=30)
     plt.tight_layout()
     plt.grid(True)
-    plt.savefig(output_folder)
+    plt.savefig(os.path.join(output_folder, title))
     plt.show()
     return plt
 
