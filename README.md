@@ -65,6 +65,10 @@ The **M-TEMP Data Processing And Analysis Programe Module** is a Python script d
 
 Ensure you have Python 3.7 or higher installed.
 
+**Download The Latest Release**
+
+To download this without having to interact with git much you can simply download the lastest release, which should be seen on the right hand side of this window.
+
 **Clone the Repository**
 
 ```{bash}
