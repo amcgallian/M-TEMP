@@ -74,16 +74,16 @@ To ensure the script functions correctly, the included Excel sheet must be up-to
 | Column Name               | Requirements                                                         |
 |---------------------------|----------------------------------------------------------------------|
 | **Test Number**           | Must be an integer.                                                 |
-| **Test Folder**           | Should be written as a string; ensure it is enclosed in quotes.    |
-| **Temperature Data**      | Should be written as a string; ensure it is enclosed in quotes.    |
-| **IR/RH Data**            | Should be written as a string; ensure it is enclosed in quotes.    |
-| **GPS Data**              | Should be written as a string; ensure it is enclosed in quotes.    |
+| **Test Folder**           | Should be written as plain text    |
+| **Temperature Data**      | Should be written as plain text    |
+| **IR/RH Data**            | Should be written as plain text    |
+| **GPS Data**              | Should be written as plain text    |
 | **Test Date**             | Valid date format, stay consistent.                                                 |
 | **Testing Route**         | Description of the testing route.                                  |
 | **Cart**                  | Name or description of the cart used.                              |
 | **Set Up**                | Description of the wiring setup process.                                  |
-| **Temperature Configuration** | Should be written as a string; ensure it is enclosed in quotes.    |
-| **IR/RH Configuration**   | Should be written as a string; ensure it is enclosed in quotes.    |
+| **Temperature Configuration** | Should be written in plain text    |
+| **IR/RH Configuration**   | Should be written in plain text    |
 
 **Note:** All columns must be filled out properly. If there is no data or information available for a column, please input `None`.
 
@@ -125,29 +125,36 @@ graph LR;
 
 ### Loading Data
 
+Here are the revised descriptions for the functions based on your updated code:
+
 #### `load_excelsheet()`
 
-Loads the Excel reference sheet and converts it into a dictionary for easy access to file paths and configurations.
+Automatically loads the Excel reference sheet and converts it into a dictionary for easy access to file paths, configurations, and test-related information. The dictionary uses test numbers as keys and their associated data, including folder paths, temperature data, IR/RH data, GPS data, and more, as a list values. This function should be run at program start to ensure all data-loading functions can access the necessary file paths.
 
 - **Parameters**:
-  - `filepath`: Path to the Excel file containing test information.
-- **Returns**: A dictionary with test numbers as keys and associated information as values.
+  - None
+- **Returns**:
+  A dictionary with test numbers as keys and associated lists of relevant information as values, such as file paths and configurations.
 
 #### `define_output_folder()`
 
-Prompts the user to select an output folder for saving generated plots.
+Automatically finds or creates the output folder for the specified test number. The function uses the test number to locate the associated test folder and ensures an 'outputs' subdirectory is created if it doesn't already exist.
 
 - **Parameters**:
-  - `folderpath`: Default path to the output folder.
-- **Returns**: The path to the selected output folder.
+  - `test_dict`: Dictionary containing test information loaded from the Excel sheet.
+  - `test_number`: The test number for which the output folder path is needed.
+- **Returns**:
+  The path to the output folder for the specified test number.
 
 #### `load_temp_daq()`
 
-Loads and cleans temperature DAQ data based on the test number.
+Loads, cleans, and returns the temperature DAQ data as a pandas DataFrame based on the given test number. It uses the test folder and temperature data path stored in the Excel reference sheet. The function formats timestamps, renames columns according to configuration, and selects relevant temperature columns for analysis.
 
 - **Parameters**:
   - `test_num`: The test number associated with the desired temperature data.
-- **Returns**: A pandas DataFrame containing temperature data.
+  - `tests_dict`: Dictionary containing test information loaded from the Excel sheet.
+- **Returns**:
+  A pandas DataFrame containing the cleaned temperature data, with the appropriate columns renamed and formatted for analysis.
 
 #### `load_ir_daq()`
 
@@ -289,6 +296,8 @@ configs = {
 
 ## Ideas for Future Development
 
+- **Make Function to Smooth Out IR Data**: Implement a function to smooth out
+IR data in some way since it is so erratic.
 - **Subset DataFrame Generation**: Implement a function to generate a subset of the DataFrame based on user-specified columns.
 - **Enhanced Visualization**: Add more visualization options and enhance current options.
 - **Data Validation**: Incorporate data validation checks to ensure data integrity before processing.
