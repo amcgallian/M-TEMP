@@ -2,7 +2,7 @@
 Module for all the functions needed when processing M-Temp data. This is to be
 used within the main.py processing code.
 
-Last Updated: 10/16/2024
+Last Updated: 10/17/2024
 Author: Andrew McGallian
 
 Ideas for further functions:
@@ -184,9 +184,9 @@ def load_temp_daq(folder: str,
     cart = None
     daqnum = headers["Serial Number"]
     if (daqnum == "21AD4B7" or daqnum =="2082107"):
-        cart = "Cart 1"
+        cart = "Cart 1 Temp"
     if daqnum == "1DE5504" or daqnum == "2082107bbbb":
-        cart = "Cart 2"
+        cart = "Cart 2 Temp"
     test_folder = folder
     temp_data_file = file
     temp_data_path = os.path.join(test_folder, temp_data_file)
