@@ -233,6 +233,7 @@ def convertCtoF(cdfcol: pd.DataFrame|gpd.GeoDataFrame
 
 
 def timeseries(dataframe: pd.DataFrame|gpd.GeoDataFrame,
+               folder: str,
                temp: bool=True,
                ir: bool=False,
                rh: bool=False,
@@ -306,6 +307,6 @@ def timeseries(dataframe: pd.DataFrame|gpd.GeoDataFrame,
     plt.legend(fontsize=30)
     plt.tight_layout()
     plt.grid(True)
-    #plt.savefig()
+    plt.savefig(f"{folder}/{title}")
     plt.show()
     return plt
