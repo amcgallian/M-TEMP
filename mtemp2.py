@@ -2,7 +2,7 @@
 Module for all the functions needed when processing M-Temp data. This is to be
 used within the main.py processing code.
 
-Last Updated: 10/17/2024
+Last Updated: 10/22/2024
 Author: Andrew McGallian
 
 Ideas for further functions:
@@ -13,6 +13,7 @@ Ideas for further functions:
 
 import pandas as pd
 import geopandas as gpd
+from shapely.geometry import Point
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.dates as mdates
@@ -165,18 +166,15 @@ def get_headers(folders: str, filename: str) -> dict[str, str]:
 
 def load_temp_daq(folder: str,
                   file: str,
-                  headers: dict[str, str],
-                  ) -> tuple[pd.DataFrame, str]:
+                  headers: dict[str, str]) -> pd.DataFrame:
     '''
-    Cleans temperature DAQ data and turns it into a DataFrame. Uses the excel
-    sheet to find the filepath based on the Test Folder and Temperature Data
-    column.
+    Cleans temperature DAQ data and turns it into a DataFrame. Uses folder,
+    file, and headers to find the filepath and cart configuration.
 
     Inputs:
-        test_num (int): The test number associated with the desired temperature
-        data in the excel sheet.
-        tests_dict (dict[int, list[str|int]]): Dictionary containing test
-        information.
+        folder (str): Name of the folder.
+        file (str): Name of the file.
+        headers (dict[str, str]): contains all the metadata.
 
     Returns:
         pd.core.frame.DataFrame: DataFrame of temperature DAQ.
@@ -187,9 +185,7 @@ def load_temp_daq(folder: str,
         cart = "Cart 1 Temp"
     if daqnum == "1DE5504" or daqnum == "2082107bbbb":
         cart = "Cart 2 Temp"
-    test_folder = folder
-    temp_data_file = file
-    temp_data_path = os.path.join(test_folder, temp_data_file)
+    temp_data_path = os.path.join(folder, file)
     temp_data = pd.read_csv(temp_data_path, skiprows=6)
     if 'AI0 (°C)' in temp_data.columns:
         temp_data.rename(columns=configs[cart], inplace=True)
@@ -307,6 +303,207 @@ def timeseries(dataframe: pd.DataFrame|gpd.GeoDataFrame,
     plt.legend(fontsize=30)
     plt.tight_layout()
     plt.grid(True)
+    plt.savefig(f"{folder}/{title}")
+    plt.show()
+    return plt
+
+
+def load_ir_daq(folder: str,
+                file: str,
+                headers: dict[str, str]) -> pd.DataFrame:
+    '''
+    Cleans IR/RH DAQ data, turns it into a DataFrame, and converts raw data to
+    the correct format.
+
+    Inputs:
+        folder (str): folder where data is.
+        file (str): file name of data.
+        headers (dict[str, str]): metadata for file.
+
+    Returns:
+        pd.core.frame.DataFrame: DataFrame of temperature DAQ.
+    '''
+    cart = None
+    daqnum = headers["Serial Number"]
+    if (daqnum == "21AD4B7" or daqnum =="2082107"):
+        cart = "Cart 1 Temp"
+    if daqnum == "1DE5504" or daqnum == "2082107bbbb":
+        cart = "Cart 2 Temp"
+    irrh_data_path = os.path.join(folder, file)
+    irrh_data = pd.read_csv(irrh_data_path, skiprows=6)
+    if 'AI0 (V)' in irrh_data.columns:
+        irrh_data.rename(columns=configs[cart], inplace=True)
+    irrh_data['Time'] = pd.to_datetime(irrh_data['Date/Time'])
+    irrh_data['Time'] = irrh_data['Time'].dt.strftime('%H:%M:%S')
+    irrh_data = irrh_data.set_index(pd.DatetimeIndex(irrh_data['Time']))
+    irrh_data = irrh_data.drop(['Sample', 'Date/Time', 'Time'], axis=1)
+
+    irrh_data = convertVtoIR_et_smooth(irrh_data)
+
+    if 'RH' in irrh_data.columns:
+        irrh_data = convertVtoRH(irrh_data)
+
+    return irrh_data
+
+
+def load_gps(file: str, folder: str) -> pd.DataFrame:
+    '''
+    Cleans GPS data and turns it into a dataframe.
+
+    Inputs:
+        file (str): name of the GPS file.
+        folder (str): folder where the GPS file is located.
+
+    Returns:
+        pd.core.frame.DataFrame: Dataframe of GPS Data
+    '''
+    gps_data_path = os.path.join(folder, file)
+    gps_data = pd.read_csv(gps_data_path)
+    gps_data['Time'] = pd.to_datetime(gps_data['Timestamp'])
+    gps_data['Time'] = gps_data['Time'].dt.strftime('%H:%M:%S')
+    gps_data = gps_data.set_index(pd.DatetimeIndex(gps_data['Time']))
+    gps_data = gps_data.drop(['Timestamp', 'Time'], axis=1)
+    return gps_data
+
+
+def convertVtoIR_et_smooth(virdfcol: pd.DataFrame|gpd.GeoDataFrame
+                 ) -> pd.DataFrame|gpd.GeoDataFrame:
+    '''
+    Calculates the temperature in °F for the raw IR data from V in a new column.
+    Uses manufacturers equation. This also generates another column of IR data
+    in °F with the data smoothed according to a moving average function.
+
+    Inputs:
+        virdfcol (pd.DataFrame|gpd.GeoDataFrame): (Geo)DataFrame with columns
+        of raw IR data in V to be converted to °F.
+
+    Returns:
+        pd.DataFrame|gpd.GeoDataFrame: (Geo)DataFrame given back with new
+        column of the temperature data converted to °F from Raw IR V.
+    '''
+    for col in virdfcol.columns:
+        if 'IR Raw (V)' in col:
+            virdfcol[col[0:2] + ' (°F)'] = ((((virdfcol[col] - 0.620)
+                                             * 105.263) * (9/5)) + 32)
+
+    window_size = 5  # Adjust as necessary
+    virdfcol['Smoothed IR (°F)'] = virdfcol['IR (°F)'].rolling(
+        window=window_size).mean()
+
+    return virdfcol
+
+
+def convertVtoRH(rhdfcol: pd.DataFrame|gpd.GeoDataFrame
+                 ) -> pd.DataFrame|gpd.GeoDataFrame:
+    '''
+    Calculates the RH% from the raw RH V and temperature in C and puts it in a
+    new column. Uses manufacturers equation.
+
+    Inputs:
+        rhvcolumn (pd.DataFrame|gpd.GeoDataFrame): (Geo)DataFrame with of raw V
+        for RH and associated temperature at the same height to be used in
+        calculation of RH%.
+
+    Returns:
+        pd.DataFrame|gpd.GeoDataFrame: (Geo)DataFrame with new column of
+        calculated RH%.
+    '''
+    for col in rhdfcol.columns:
+        if 'Raw RH' in col:
+            ir_v = col
+            rtd_temp = 0
+            for daqcol in rhdfcol.columns:
+                if ir_v[7:] in daqcol and 'b' not in daqcol:
+                    rtd_temp = daqcol
+            rhdfcol[col[7:] + 'RH (%)'] = (((rhdfcol[col]/5)-0.16)/0.0062
+                                        )/(1.0546 - (0.00216 * ((
+                                            rhdfcol[rtd_temp] - 32) * (5/9))))
+    return rhdfcol
+
+
+def merge_sensors(sensordf: pd.DataFrame,
+                  irrhdf: pd.DataFrame) -> pd.DataFrame:
+    '''
+    Merges the temperature and IR/RH dataframes using their relevant DataFrames
+
+    Inputs:
+        sensordf (pd.DataFrame): Temperature Dataframe
+        irrhdf (pd.DataFrame): IR/RH DataFrame
+
+    Returns:
+        pd.DataFrame The new merged dataframe
+    '''
+    merged_sensor_df = pd.merge(sensordf, irrhdf, left_index=True,
+                                right_index=True, how='inner')
+    return merged_sensor_df
+
+
+def spatially_enable_data(sensordf: pd.DataFrame,
+                          gpsdf: pd.DataFrame,
+                          irrhdf: None|pd.DataFrame=None) -> gpd.GeoDataFrame:
+    '''
+    Merges Temperature sensor dataframe with gps dataframe to create a GeoDataFrame with
+    specified CRS. Will also merge IR if desired.
+
+    Inputs:
+        sensordf (pd.DataFrame): DataFrame containing all relevant sensor data
+        to be merged.
+        gpsdf (pd.DataFrame): DataFrame containing all relevant gps data to be
+        merged.
+        irrhdf (pd.DataFrame): DataFrame containing all relevant IR/RH data to
+        be merged. Is not included by default.
+
+    Returns:
+        gpd.core.series.GeoDataFrame: New spatially enabled GeoDataFrame of
+        sensor data.
+    '''
+    if irrhdf is not None:
+        merged_sensor_df = merge_sensors(sensordf, irrhdf)
+        merged_df = pd.merge(merged_sensor_df, gpsdf, left_index=True,
+                            right_index=True, how='inner')
+    else:
+        merged_df = pd.merge(sensordf, gpsdf, left_index=True,
+                             right_index=True, how='inner')
+    geometry = [Point(xy) for xy in zip(merged_df['Longitude'],
+                                        merged_df['Latitude'])]
+    gdf = gpd.GeoDataFrame(merged_df, geometry=geometry, crs="EPSG:4326")
+    gdf = gdf.to_crs(epsg=3857)
+    return gdf
+
+
+def scatter_plot(column1: pd.Series|gpd.GeoSeries,
+                 column2: pd.Series|gpd.GeoSeries,
+                 folder: str,
+                 column3: None|pd.Series|gpd.GeoSeries=None,
+                 cmap: str='viridis'
+                 ) -> plt.Figure:
+    '''
+    Generates a scatter plot of two chosen columns from a (Geo)DataFrame.
+
+    Inputs:
+        column1 (pd.Series|gpd.GeoSeries): Column 1 to be plotted.
+        column2 (pd.Series|gpd.GeoSeries): Column 2 to be plotted.
+        folder (str): Where the plot will be saved to.
+        column3 (None|pd.Series|gpd.GeoSeries): Column 3 to be plotted as a
+        color ramp on the plotted points of Column 1 and 2. Default None.
+        cmap (str): Colormap to use for coloring points based on column3.
+                    Default is 'viridis'.
+
+    Returns:
+        plt.Figure: The scatter plot of the columns plotted.
+
+    '''
+    plt.figure()
+    if column3 is not None:
+        plt.scatter(column1, column2, c=column3, cmap=cmap)
+        plt.colorbar(label=column3.name)
+    else:
+        plt.scatter(column1, column2, color='green')
+    plt.xlabel(column1.name)
+    plt.ylabel(column2.name)
+    title = (f'{column1.name} vs. {column2.name} Correlation Plot')
+    plt.title(title)
+    plt.legend()
     plt.savefig(f"{folder}/{title}")
     plt.show()
     return plt
