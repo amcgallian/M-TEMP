@@ -232,6 +232,7 @@ def timeseries(dataframe: pd.DataFrame|gpd.GeoDataFrame,
                folder: str,
                temp: bool=True,
                ir: bool=False,
+               smooth: bool=False,
                rh: bool=False,
                b: bool=True,
                yminmax: None|tuple[int|float, int|float]=None,
@@ -249,6 +250,7 @@ def timeseries(dataframe: pd.DataFrame|gpd.GeoDataFrame,
         the columns to be used for plotting.
         temp (bool): If RTDs should be plotted. Default True.
         ir (bool): If IR should be plotted. Defualt False.
+        smooth(bool): If you want to use the smoothed IR data. Default False.
         rh (bool): If RH should be plotted. Default False.
         b (bool): If the 'b' RTD sensors should be plotted. Default True. Will
         be plotted as dashed lines of the same color as their 'a'.
@@ -284,7 +286,10 @@ def timeseries(dataframe: pd.DataFrame|gpd.GeoDataFrame,
                             linestyle='dashed')
         plt.ylabel('Temperature (°F)', fontsize=30)
     if ir:
-        plt.plot(dataframe.index, dataframe['IR (°F)'], label='IR (°F)',
+        column_to_use = dataframe['IR (°F)']
+        if smooth:
+            column_to_use = dataframe['Smoothed IR (°F)']
+        plt.plot(dataframe.index, column_to_use, label='IR (°F)',
                  color='black')
         plt.ylabel('Temperature (°F)', fontsize=30)
     if rh:
@@ -386,9 +391,9 @@ def convertVtoIR_et_smooth(virdfcol: pd.DataFrame|gpd.GeoDataFrame
             virdfcol[col[0:2] + ' (°F)'] = ((((virdfcol[col] - 0.620)
                                              * 105.263) * (9/5)) + 32)
 
-    window_size = 5  # Adjust as necessary
-    virdfcol['Smoothed IR (°F)'] = virdfcol['IR (°F)'].rolling(
-        window=window_size).mean()
+            window_size = 100  # Adjust as necessary
+            virdfcol['Smoothed IR (°F)'] = virdfcol[col[0:2] + ' (°F)'].rolling(
+                window=window_size).mean()
 
     return virdfcol
 
