@@ -19,6 +19,7 @@ import matplotlib.colors as mcolors
 import matplotlib.dates as mdates
 import os as os
 import io as io
+import string
 
 # Configurations for Cart DAQ Set Ups
 
@@ -308,7 +309,7 @@ def timeseries(dataframe: pd.DataFrame|gpd.GeoDataFrame,
     plt.legend(fontsize=30)
     plt.tight_layout()
     plt.grid(True)
-    plt.savefig(f"{folder}/{title}")
+    plt.savefig(f"{folder}/{title.replace('.', '_')}")
     plt.show()
     return plt
 
@@ -331,9 +332,9 @@ def load_ir_daq(folder: str,
     cart = None
     daqnum = headers["Serial Number"]
     if (daqnum == "21AD4B7" or daqnum =="2082107"):
-        cart = "Cart 1 Temp"
+        cart = "Cart 1 IR"
     if daqnum == "1DE5504" or daqnum == "2082107bbbb":
-        cart = "Cart 2 Temp"
+        cart = "Cart 2 IR"
     irrh_data_path = os.path.join(folder, file)
     irrh_data = pd.read_csv(irrh_data_path, skiprows=6)
     if 'AI0 (V)' in irrh_data.columns:
@@ -509,6 +510,6 @@ def scatter_plot(column1: pd.Series|gpd.GeoSeries,
     title = (f'{column1.name} vs. {column2.name} Correlation Plot')
     plt.title(title)
     plt.legend()
-    plt.savefig(f"{folder}/{title}")
+    plt.savefig(f"{folder}/{title.replace('.', '_')}")
     plt.show()
     return plt
